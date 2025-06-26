@@ -34,7 +34,7 @@ fvm install 3.22.2
 fvm use 3.22.2
 fvm flutter doctor
 
-##Các lệnh FVM cơ bản
+## Các lệnh FVM cơ bản
 | Lệnh                    | Chức năng                                               |
 | :---------------------- | :------------------------------------------------------ |
 | `fvm install <version>` | Cài 1 version Flutter (ví dụ: `fvm install 3.22.2`)     |
