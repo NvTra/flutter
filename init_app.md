@@ -13,6 +13,6 @@ rmdir /s /q windows
 ```
 ### add hook
 ```
-flutter pub add flutter_hooks 
-
+flutter pub add flutter_hooks
+flutter pub add hooks_riverpod
 ```
