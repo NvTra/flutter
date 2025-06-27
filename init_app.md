@@ -22,3 +22,18 @@ flutter pub add hooks_riverpod
 ```
 flutter pub add auto_route dev:auto_route_generator dev:build_runner
 ```
+cấu hình app_router v10
+```
+part 'app_router.gr.dart';
+
+@AutoRouterConfig(replaceInRouteName: 'Screen|Page,Route')
+class AppRouter extends RootStackRouter {
+  @override
+  // TODO: implement routes
+  List<AutoRoute> get routes => [
+    AutoRoute(page: HomeRoute.page, initial: true),
+    ....
+  ];
+}
+```
+- auto generete: flutter pub run build_runner build --delete-conflicting-outputs
