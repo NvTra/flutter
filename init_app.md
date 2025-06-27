@@ -16,3 +16,9 @@ rmdir /s /q windows
 flutter pub add flutter_hooks
 flutter pub add hooks_riverpod
 ```
+
+
+### add auto_router
+```
+flutter pub add auto_route dev:auto_route_generator dev:build_runner
+```
