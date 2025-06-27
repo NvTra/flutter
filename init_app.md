@@ -17,7 +17,6 @@ flutter pub add flutter_hooks
 flutter pub add hooks_riverpod
 ```
 
-
 ### add auto_router
 ```
 flutter pub add auto_route dev:auto_route_generator dev:build_runner
@@ -36,4 +35,6 @@ class AppRouter extends RootStackRouter {
   ];
 }
 ```
-- auto generete: flutter pub run build_runner build --delete-conflicting-outputs
+- thêm `@RoutePage()` vào các page
+- auto generete: `flutter pub run build_runner build --delete-conflicting-outputs`
+- sử dụng `context.pushRoute(const HomeRoute())`
