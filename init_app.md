@@ -6,10 +6,8 @@ flutter create <app_name>
 ### remove folder
 
 ```
-rmdir /s /q linux
-rmdir /s /q macos
-rmdir /s /q web
-rmdir /s /q windows
+rmdir /s /q linux && rmdir /s /q macos && rmdir /s /q web && rmdir /s /q windows
+
 ```
 ### add hook
 ```
