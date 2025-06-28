@@ -14,7 +14,8 @@ rmdir /s /q linux && rmdir /s /q macos && rmdir /s /q web && rmdir /s /q windows
 flutter pub add flutter_hooks
 flutter pub add hooks_riverpod
 ```
-
+  flutter_hooks: ^0.20.5
+  hooks_riverpod: ^2.6.1
 ### add auto_router
 ```
 flutter pub add auto_route dev:auto_route_generator dev:build_runner
