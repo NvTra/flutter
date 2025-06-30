@@ -43,6 +43,7 @@ dependencies:
 
 Chạy:
 ```bash
+dart pub global activate flutterfire_cli
 flutter pub get
 ```
 
