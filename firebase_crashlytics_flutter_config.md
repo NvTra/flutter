@@ -156,3 +156,10 @@ Bạn đã cấu hình:
 - Firebase Project và file `google-services.json`
 - Firebase SDK (`firebase_core`, `firebase_crashlytics`)
 - Gửi lỗi thử và xem được trên Firebase Console
+
+## Note cài đặt fire base
+- npm install -g firebase-tools
+- firebase --version
+- firebase login
+- npm install -g firebase-tools
+- flutterfire configure
