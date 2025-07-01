@@ -31,6 +31,16 @@ rmdir /s /q linux macos web windows
 flutter devices
 ```
 
+# Tạo thư mục theo chuẩn Clean_Architecture
+```
+mkdir lib\core\api lib\core\constants lib\core\error lib\core\network ^
+lib\data\datasources\remote lib\data\models lib\data\repositories ^
+lib\domain\entities lib\domain\repositories lib\domain\usecases ^
+lib\presentation\screens\post lib\presentation\viewmodels lib\presentation\widgets ^
+lib\routes
+```
+
+
 ### 1.2. Cài đặt Dependencies Cơ bản
 ```yaml
 dependencies:
@@ -63,27 +73,15 @@ API_BASE_URL=https://api.production.com
 API_TIMEOUT=30000
 API_KEY=your_api_key
 
-# .env.development
-API_BASE_URL=https://api.dev.com
-API_TIMEOUT=60000
-API_KEY=your_dev_api_key
-
-# .env.staging
-API_BASE_URL=https://api.staging.com
-API_TIMEOUT=45000
-API_KEY=your_staging_api_key
-```
-
 2. Cấu hình pubspec.yaml:
 ```yaml
 flutter:
   assets:
     - .env
-    - .env.development
-    - .env.staging
 ```
 
 3. Tạo Environment Helper:
+```flutter pub add flutter_dotenv ```
 ```dart
 // lib/env.dart
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -99,6 +97,13 @@ class Env {
       dotenv.env['API_KEY'] ?? '';
 }
 ```
+
+4. Cấu hình main:
+```
+await dotenv.load(fileName: '.env');
+```
+5. Sử dụng: Env.apiUrl
+
 
 ### 2.2. Bảo mật Environment
 ```gitignore
@@ -142,10 +147,15 @@ dependencies:
     sdk: flutter
   intl: ^0.18.1
 ```
-
+```
+flutter pub add intl
+```
 #### 3.3.2. Cấu hình pubspec.yaml
 ```yaml
 # pubspec.yaml
+flutter_localizations:
+  sdk: flutter
+  
 flutter:
   generate: true # Kích hoạt generation của synthetic packages
 ```
@@ -162,52 +172,22 @@ lib/
 ```json
 // lib/l10n/app_en.arb
 {
-    "appTitle": "My App",
-    "@appTitle": {
-        "description": "The title of the application"
-    },
-    "hello": "Hello {username}",
-    "@hello": {
-        "description": "A welcome message",
-        "placeholders": {
-            "username": {
-                "type": "String",
-                "example": "John"
-            }
-        }
-    },
-    "itemCount": "{count, plural, =0{No items} =1{1 item} other{{count} items}}",
-    "@itemCount": {
-        "description": "A message showing item count",
-        "placeholders": {
-            "count": {
-                "type": "num",
-                "format": "compact"
-            }
-        }
-    },
-    "lastUpdated": "Last updated: {date}",
-    "@lastUpdated": {
-        "description": "A message showing last updated date",
-        "placeholders": {
-            "date": {
-                "type": "DateTime",
-                "format": "yMd"
-            }
-        }
-    }
+  "@@locale": "en",
+  "hello": "Hello",
+  "welcome": "Welcome to our app"
 }
 ```
 
 ```json
 // lib/l10n/app_vi.arb
 {
-    "appTitle": "Ứng dụng của tôi",
-    "hello": "Xin chào {username}",
-    "itemCount": "{count, plural, =0{Không có mục nào} =1{1 mục} other{{count} mục}}",
-    "lastUpdated": "Cập nhật lần cuối: {date}"
+  "@@locale": "vi",
+  "hello": "Xin chào",
+  "welcome": "Chào mừng đến với ứng dụng của chúng tôi"
 }
 ```
+
+- chạy lệnh `flutter pub run build_runner build --delete-conflicting-outputs` để gen 
 
 #### 3.3.4. Cấu hình l10n.yaml
 ```yaml
@@ -218,35 +198,7 @@ output-localization-file: app_localizations.dart
 output-class: AppLocalizations
 ```
 
-#### 3.3.5. Cấu hình MaterialApp
-```dart
-// lib/main.dart
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('en'), // English
-        Locale('vi'), // Vietnamese
-      ],
-      locale: const Locale('vi'), // Mặc định ngôn ngữ Tiếng Việt
-      // Hoặc để null để sử dụng ngôn ngữ hệ thống
-      // locale: null,
-    );
-  }
-}
-```
-
-#### 3.3.6. Sử dụng với Riverpod
+#### 3.3.5. Sử dụng với Riverpod và lưu trữ Locale `shared_preferences`
 ```dart
 // lib/providers/locale_provider.dart
 final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) {
@@ -254,13 +206,31 @@ final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) {
 });
 
 class LocaleNotifier extends StateNotifier<Locale> {
-  LocaleNotifier() : super(const Locale('vi'));
+  static const String _localeKey = 'app_locale';
 
-  void changeLocale(String languageCode) {
+  LocaleNotifier() : super(const Locale('vi')) {
+    _loadSavedLocale();
+  }
+
+  Future<void> _loadSavedLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final langCode = prefs.getString(_localeKey);
+
+    if (langCode != null && langCode.isNotEmpty) {
+      state = Locale(langCode);
+    }
+  }
+
+  Future<void> changeLocale(String languageCode) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString(_localeKey, languageCode);
     state = Locale(languageCode);
   }
 }
-
+```
+#### 3.3.5. Cấu hình main
+```
 // lib/main.dart
 class MyApp extends ConsumerWidget {
   @override
@@ -268,14 +238,21 @@ class MyApp extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     
     return MaterialApp(
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       locale: locale,
-      // ... other configurations
+      supportedLocales: AppLocalizations.supportedLocales,
+	  ...
     );
   }
 }
 ```
 
-#### 3.3.7. Sử dụng Localizations
+#### 3.3.6. Sử dụng Localizations
 ```dart
 // Trong widget
 class MyHomePage extends StatelessWidget {
@@ -300,146 +277,15 @@ class MyHomePage extends StatelessWidget {
 }
 ```
 
-#### 3.3.8. Lưu trữ Locale
+#### 3.3.9. Language Change
 ```dart
-// lib/services/locale_storage.dart
-class LocaleStorage {
-  static const String _key = 'selected_locale';
-  final SharedPreferences _prefs;
-
-  LocaleStorage(this._prefs);
-
-  Future<void> saveLocale(String languageCode) async {
-    await _prefs.setString(_key, languageCode);
-  }
-
-  String? getLocale() {
-    return _prefs.getString(_key);
-  }
-}
-
-// Sử dụng với Provider
-final localeStorageProvider = Provider<LocaleStorage>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return LocaleStorage(prefs);
-});
-
-class LocaleNotifier extends StateNotifier<Locale> {
-  final LocaleStorage _storage;
-  
-  LocaleNotifier(this._storage) : super(Locale(_storage.getLocale() ?? 'vi'));
-
-  Future<void> changeLocale(String languageCode) async {
-    await _storage.saveLocale(languageCode);
-    state = Locale(languageCode);
-  }
-}
+ref.read(localeProvider.notifier).changeLocale('vi');
 ```
-
-#### 3.3.9. Language Selector Widget
-```dart
-// lib/widgets/language_selector.dart
-class LanguageSelector extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-    final currentLocale = ref.watch(localeProvider);
-
-    return PopupMenuButton<String>(
-      onSelected: (String languageCode) {
-        ref.read(localeProvider.notifier).changeLocale(languageCode);
-      },
-      itemBuilder: (BuildContext context) => [
-        PopupMenuItem<String>(
-          value: 'en',
-          child: Row(
-            children: [
-              if (currentLocale.languageCode == 'en')
-                const Icon(Icons.check),
-              const SizedBox(width: 8),
-              const Text('English'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'vi',
-          child: Row(
-            children: [
-              if (currentLocale.languageCode == 'vi')
-                const Icon(Icons.check),
-              const SizedBox(width: 8),
-              const Text('Tiếng Việt'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-```
-
-#### 3.3.10. Best Practices
-
-1. **Tổ chức File ARB**:
-   - Sử dụng phân cấp key (vd: `auth.login`, `auth.register`)
-   - Thêm mô tả cho mỗi chuỗi
-   - Sử dụng placeholders thay vì nối chuỗi
-
-2. **Xử lý Số Nhiều**:
-   ```json
-   {
-     "remainingTime": "{count, plural, =0{Hết thời gian} =1{Còn 1 phút} other{Còn {count} phút}}"
-   }
-   ```
-
-3. **Xử lý Ngày Tháng**:
-   ```json
-   {
-     "birthday": "{date, date, medium}"
-   }
-   ```
-
-4. **Xử lý Số**:
-   ```json
-   {
-     "price": "{amount, number, currency}"
-   }
-   ```
-
-5. **Testing**:
-   ```dart
-   testWidgets('shows translated text', (tester) async {
-     await tester.pumpWidget(
-       MaterialApp(
-         localizationsDelegates: AppLocalizations.localizationsDelegates,
-         supportedLocales: AppLocalizations.supportedLocales,
-         locale: const Locale('vi'),
-         home: MyWidget(),
-       ),
-     );
-     
-     expect(find.text('Xin chào'), findsOneWidget);
-   });
-   ```
-
-#### 3.3.11. Lưu ý Quan Trọng
-
-1. **Performance**:
-   - Sử dụng `const` cho các widget tĩnh
-   - Tránh rebuild không cần thiết
-   - Cache các giá trị đã dịch
-
-2. **Maintenance**:
-   - Giữ các file ARB đồng bộ
-   - Sử dụng tool để quản lý translation
-   - Review các bản dịch
-
-3. **Fallback**:
-   - Xử lý khi không có bản dịch
-   - Sử dụng ngôn ngữ mặc định
-   - Log các key thiếu
 
 ## 4. Routing
+```
+flutter pub add auto_route dev:auto_route_generator dev:build_runner
+```
 
 ### 4.1. Auto Router Setup
 ```dart
@@ -1002,34 +848,39 @@ class AppTheme {
 }
 
 // lib/config/theme/theme_provider.dart
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return ThemeNotifier(prefs);
+  return ThemeNotifier();
 });
 
 class ThemeNotifier extends StateNotifier<ThemeMode> {
-  final SharedPreferences _prefs;
-  static const _key = 'theme_mode';
+  ThemeNotifier() : super(ThemeMode.system) {
+    _loadThemeMode();
+  }
 
-  ThemeNotifier(this._prefs) : super(_loadThemeMode(_prefs));
+  static const _themeKey = 'app_theme';
 
-  static ThemeMode _loadThemeMode(SharedPreferences prefs) {
-    final value = prefs.getString(_key);
-    return ThemeMode.values.firstWhere(
-      (mode) => mode.toString() == value,
-      orElse: () => ThemeMode.system,
-    );
+  Future<void> _loadThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final theme = prefs.getString(_themeKey);
+    if (theme != null && theme.isNotEmpty) {
+      state = ThemeMode.values.firstWhere(
+        (e) => e.name == theme,
+        orElse: () => ThemeMode.system,
+      );
+    }
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
-    await _prefs.setString(_key, mode.toString());
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themeKey, mode.name);
     state = mode;
   }
 }
+
 
 // lib/main.dart
 class MyApp extends ConsumerWidget {
@@ -1047,55 +898,9 @@ class MyApp extends ConsumerWidget {
 }
 ```
 
-### 3.4.2. Theme Selector Widget
+### 3.4.2. Theme Change
 ```dart
-class ThemeSelector extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentTheme = ref.watch(themeProvider);
-
-    return PopupMenuButton<ThemeMode>(
-      onSelected: (ThemeMode mode) {
-        ref.read(themeProvider.notifier).setThemeMode(mode);
-      },
-      itemBuilder: (BuildContext context) => [
-        PopupMenuItem<ThemeMode>(
-          value: ThemeMode.system,
-          child: Row(
-            children: [
-              if (currentTheme == ThemeMode.system)
-                const Icon(Icons.check),
-              const SizedBox(width: 8),
-              const Text('Theo hệ thống'),
-            ],
-          ),
-        ),
-        PopupMenuItem<ThemeMode>(
-          value: ThemeMode.light,
-          child: Row(
-            children: [
-              if (currentTheme == ThemeMode.light)
-                const Icon(Icons.check),
-              const SizedBox(width: 8),
-              const Text('Sáng'),
-            ],
-          ),
-        ),
-        PopupMenuItem<ThemeMode>(
-          value: ThemeMode.dark,
-          child: Row(
-            children: [
-              if (currentTheme == ThemeMode.dark)
-                const Icon(Icons.check),
-              const SizedBox(width: 8),
-              const Text('Tối'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
+ ref.read(themeProvider.notifier).setThemeMode(ThemeMode.light);
 ```
 
 ### 3.4.3. Sử dụng Theme
