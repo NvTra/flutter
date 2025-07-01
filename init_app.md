@@ -11,7 +11,7 @@ rmdir /s /q linux && rmdir /s /q macos && rmdir /s /q web && rmdir /s /q windows
 ```
 ### add hook
 ```
-flutter pub add flutter_hooks && flutter pub add hooks_riverpod
+flutter pub add flutter_hooks && flutter pub add hooks_riverpod && flutter pub add retrofit && flutter pub add http, flutter pub add dio
 ```
   flutter_hooks: ^0.20.5
   hooks_riverpod: ^2.6.1
